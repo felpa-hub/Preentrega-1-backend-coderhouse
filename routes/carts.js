@@ -3,32 +3,33 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
-// Carga datos de los carritos desde un archivo JSON
+// Cargar datos de los carritos
 const cartsFilePath = path.join(__dirname, '../data/carts.json');
 let carritos = JSON.parse(fs.readFileSync(cartsFilePath, 'utf-8'));
 
-// guardar datos de carritos en el archivo JSON
+// Función para guardar datos de los carritos
 const saveCarts = () => {
     fs.writeFileSync(cartsFilePath, JSON.stringify(carritos, null, 2), 'utf-8');
 };
 
-// Listar todos los carritos
+// GET /api/carts - Listar todos los carritos
 router.get('/', (req, res) => {
     res.json(carritos);
 });
 
-// Obtener un carrito por ID
+// GET /api/carts/:cid - Obtener un carrito por ID
 router.get('/:cid', (req, res) => {
-    const carritoId = req.params.cid; 
-    const carrito = carritos.find(c => c.id === carritoId); 
+    const carritoId = req.params.cid;
+    const carrito = carritos.find(c => c.id === carritoId);
+
     if (carrito) {
         res.json(carrito.products);
     } else {
-        res.status(404).json({ error: 'Carrito no encontrado' }); 
+        res.status(404).json({ error: 'Carrito no encontrado' });
     }
 });
 
-// Crear un nuevo carrito
+// POST /api/carts - Crear un nuevo carrito
 router.post('/', (req, res) => {
     const { products = [] } = req.body;
 
@@ -37,32 +38,30 @@ router.post('/', (req, res) => {
         products
     };
 
-    carritos.push(nuevoCarrito); 
-    saveCarts(); 
+    carritos.push(nuevoCarrito);
+    saveCarts();
     res.status(201).json(nuevoCarrito);
 });
 
-// Agregar un producto al carrito
+// POST /api/carts/:cid/product/:pid - Agregar un producto al carrito
 router.post('/:cid/product/:pid', (req, res) => {
-    const carritoId = req.params.cid; 
+    const carritoId = req.params.cid;
     const productoId = req.params.pid;
 
-    const carrito = carritos.find(c => c.id === carritoId); 
+    const carrito = carritos.find(c => c.id === carritoId);
     if (!carrito) {
-        return res.status(404).json({ error: 'Carrito no encontrado' }); 
+        return res.status(404).json({ error: 'Carrito no encontrado' });
     }
 
-   
     const indiceProducto = carrito.products.findIndex(p => p.id === productoId);
     if (indiceProducto !== -1) {
-       
         carrito.products[indiceProducto].quantity += 1;
     } else {
         carrito.products.push({ id: productoId, quantity: 1 });
     }
 
     saveCarts();
-    res.status(201).json(carrito); 
+    res.status(201).json(carrito);
 });
 
-module.exports = router; // Exportar el router para usarlo en otros archivos
+module.exports = router;
