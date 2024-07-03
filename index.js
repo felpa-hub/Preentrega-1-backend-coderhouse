@@ -9,6 +9,11 @@ const server = http.createServer(app);
 const io = new Server(server);
 const PORT = 8080;
 
+// Conectar a MongoDB
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch(err => console.error('Error al conectar a MongoDB', err));
+
 // Configuración de Handlebars
 app.engine('handlebars', exphbs());
 app.set('view engine', 'handlebars');
@@ -33,6 +38,31 @@ app.get('/realtimeproducts', (req, res) => {
 app.get('/home', (req, res) => {
     res.render('home', { products: [] });
 });
+
+// Middleware para pasar la instancia de Socket.io a los routers
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
+// Ruta para la vista de productos en tiempo real
+app.get('/realtimeproducts', (req, res) => {
+    res.render('realTimeProducts', { products: [] });
+});
+
+// Ruta para la vista home de productos
+app.get('/home', (req, res) => {
+    res.render('home', { products: [] });
+});
+
+// Configuración de WebSocket
+io.on('connection', (socket) => {
+    console.log('Usuario conectado');
+
+    // Manejar desconexión de usuarios
+    socket.on('disconnect', () => {
+        console.log('Usuario desconectado');
+    });
 
 // Escuchar conexiones de WebSocket
 io.on('connection', (socket) => {
